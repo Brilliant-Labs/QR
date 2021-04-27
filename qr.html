@@ -96,7 +96,7 @@
 						// Redirect
 						document.getElementById("rItem").innerHTML = data[1];
 						document.getElementById("rTitle").innerHTML = data[2];
-						document.getElementById("rURL").innerHTML = data[3];
+						document.getElementById("rURL").onclick = function(){redirect(data[3]);};
 						document.getElementById("rImage").src = data[4];
 						document.getElementById("rAssociatedText").innerHTML = data[5];
 						
@@ -113,7 +113,7 @@
 						// File Download
 						document.getElementById("fItem").innerHTML = data[1];
 						document.getElementById("fTitle").innerHTML = data[2];
-						document.getElementById("fURL").onclick= "window.location = " + data[3];
+						document.getElementById("fURL").onclick = function(){redirect(data[3]);};
 						document.getElementById("fImage").src = data[4];
 						document.getElementById("fAssociatedText").innerHTML = data[5];
 						
@@ -140,7 +140,7 @@
 	
 	<body style="margin : 0px; overflow: hidden; height: 100%; width: 100%; min-width: 100%; min-height: 100%;" onload="hideHandlers()">
 	
-		<div style="width: 100vw" id="reader"></div>
+		<div style="width: 500px" id="reader"></div>
 		
 		<div id="RedirectHandler">
 		
@@ -208,6 +208,10 @@
 				x.style.display = "none";
 			}
 			
+		}
+		
+		function redirect(url){
+			window.location=url;
 		}
 		
 	</script>
