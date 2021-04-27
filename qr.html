@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+	
+	
+	<head>
+		
+		<meta charset="utf-8">
+		<title>Hello, QR Reader</title>
+		
+		<!-- App Modular Javascript -->
+		<script src="https://192.168.0.12/js/qr.js"></script>
+		
+		<script>
+		
+		// Note that CURVED MONITORS can cause more common disruptions.
+		// Face to face with screen. Try to not be looking at things from an angle in game or in person.
+		
+			var html5QrcodeScanner;
+			var data;
+			var previousScanStatus;
+			
+			const FIELDS = {
+				TYPE_OF_CONTENT: 0,
+				ITEM: 1,
+				TITLE: 2,
+				URL: 3,
+				IMAGE_ASSET: 4,
+				ASSOCIATED_TEXT: 5
+			}
+			
+			function onScanSuccess(qrCodeMessage) {
+				processMessage (qrCodeMessage);
+			}
+
+			function onScanError(errorMessage) {
+				alert (errorMessage);
+			}
+		
+			function setElementVisibility(el, show){
+			
+				var x = document.getElementById(el);
+				
+				if (show) {
+					x.style.display = "block";
+				} else {
+					x.style.display = "none";
+				}
+				
+			}
+			
+			function stopScanner(){
+			
+				html5QrCode.stop().then(ignore => {
+				
+				  // QR Code scanning is stopped.
+				  console.log("QR Code scanning stopped.");
+				  
+				}).catch(err => {
+				
+				  // Stop failed, handle it.
+				  console.log("Unable to stop scanning.");
+				  
+				});
+				
+			}
+			
+			function processMessage(msg){
+			
+				var index = 0;
+				previousScanStatus = true;
+				
+				msg = msg.replace("&#39;", "'");
+				data = msg.split(";");
+				
+				if (previousScanStatus){
+				
+					alert (msg.replace("&#39;", "'"));
+					
+					switch(data[FIELDS.TYPE_OF_CONTENT]){
+					
+						case "R":
+						
+							// Redirect
+							document.getElementById("rItem").innerHTML = data[1];
+							document.getElementById("rTitle").innerHTML = data[2];
+							document.getElementById("rURL").innerHTML = data[3];
+							document.getElementById("rImage").src = data[4];
+							document.getElementById("rAssociatedText").innerHTML = data[5];
+							
+							setElementVisibility("DownloadHandler", false);
+							setElementVisibility("RedirectHandler", true);
+							
+							// setElementVisibility("reader", false);
+							stopScanner();
+							
+							break;
+							
+						case "PDF":
+						
+							// File Download
+							document.getElementById("fItem").innerHTML = data[1];
+							document.getElementById("fTitle").innerHTML = data[2];
+							document.getElementById("fURL").innerHTML = data[3];
+							document.getElementById("fImage").src = data[4];
+							document.getElementById("fAssociatedText").innerHTML = data[5];
+							
+							setElementVisibility("RedirectHandler", false);
+							setElementVisibility("DownloadHandler", true);
+							
+							// setElementVisibility("reader", false);
+							stopScanner();
+							
+							break;
+						
+					}
+					
+				}
+				
+			}
+			
+			
+			
+		</script>
+		
+	</head>
+	
+	
+	<body style="margin : 0px; overflow: hidden;" onload="hideHandlers()">
+	
+		<div style="width: 500px" id="reader"></div>
+		
+		<div id="RedirectHandler">
+		
+			<p id="rTitle"></p>
+			</br><image id="rImage">
+			
+			<p id="rItem"></p>
+			<p id="rAssociatedText"></p>
+			
+			<button onClick="CancelHeader()">Cancel</button>
+			<button id="rURL">Lets Go!</button>
+			
+			
+		</div>
+		
+		<div id="DownloadHandler">
+		
+			<p id="fTitle"></p>
+			</br><image id="fImage">
+			
+			<p id="fItem"></p>
+			<p id="fAssociatedText"></p>
+			
+			<button class="CancelHandler">Cancel</button>
+			<button id="fURL">Download</button>
+			
+		</div>
+		
+	</body>
+	
+	
+	<script>
+	
+		html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
+		
+		function hideHandlers() {
+		
+			setElementVisibility("RedirectHandler", false);
+			setElementVisibility("DownloadHandler", false);
+		}
+	
+		function cancelHeader(){
+			hideHandlers();
+			setElementVisibility("reader", true);
+		}
+	
+		html5QrcodeScanner.render(onScanSuccess);
+
+		// This method will trigger user permissions
+		Html5Qrcode.getCameras().then(devices => {
+		
+		   /**
+		   * devices would be an array of objects of type:
+		   * { id: "id", label: "label" }
+		   */
+			if (devices && devices.length){
+			
+				var cameraID = devices[0].id;
+				// .. use this to start scanning.
+				
+			}
+			
+		}).catch(err => {
+		
+			// handle err
+			
+		});
+		
+		
+	</script>
+	
+	
+</html>
