@@ -5,9 +5,8 @@
 	<head>
 		
 		<meta charset="utf-8">
-		<title>Hello, QR Reader</title>
+		<title>QR Reader</title>
 		
-		<!-- App Modular Javascript -->
 		<script src="https://192.168.0.12/js/qr.js"></script>
 		
 		<script>
@@ -17,7 +16,6 @@
 		
 			var html5QrcodeScanner;
 			var data;
-			var previousScanStatus;
 			
 			const FIELDS = {
 				TYPE_OF_CONTENT: 0,
@@ -33,91 +31,106 @@
 			}
 
 			function onScanError(errorMessage) {
+				
+				/*
+				
+				*********************************************************************************
+				
+					Still for exploring purposes only. 
+					
+					Might be able to give user feedback on how to better align/position
+					camera to achieve a successful scan using these findings.
+					
+				*********************************************************************************
+				
+				
+				if (errorMessage.includes("finder patterns")) return;
+				if (errorMessage.includes("alignment patterns")) return;
+				if (errorMessage.includes("locator degree does not match number of roots")) return;
+				if (errorMessage.includes("error = error")) return;
+				if (errorMessage.includes("getVersionForNumber")) return;
+				if (errorMessage.includes("readVersion")) return;
+				
 				alert (errorMessage);
-			}
-		
-			function setElementVisibility(el, show){
-			
-				var x = document.getElementById(el);
 				
-				if (show) {
-					x.style.display = "block";
-				} else {
-					x.style.display = "none";
-				}
-				
+				*/
 			}
 			
-			function stopScanner(){
+			function loadScanner(){
 			
-				html5QrCode.stop().then(ignore => {
+				html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
 				
-				  // QR Code scanning is stopped.
-				  console.log("QR Code scanning stopped.");
-				  
-				}).catch(err => {
+				html5QrcodeScanner.render(onScanSuccess, onScanError);
+
+				// This method will trigger user permissions
+				Html5Qrcode.getCameras().then(devices => {
 				
-				  // Stop failed, handle it.
-				  console.log("Unable to stop scanning.");
-				  
-				});
-				
-			}
-			
-			function processMessage(msg){
-			
-				var index = 0;
-				previousScanStatus = true;
-				
-				msg = msg.replace("&#39;", "'");
-				data = msg.split(";");
-				
-				if (previousScanStatus){
-				
-					alert (msg.replace("&#39;", "'"));
+				   /**
+				   * devices would be an array of objects of type:
+				   * { id: "id", label: "label" }
+				   */
+					if (devices && devices.length){
 					
-					switch(data[FIELDS.TYPE_OF_CONTENT]){
-					
-						case "R":
-						
-							// Redirect
-							document.getElementById("rItem").innerHTML = data[1];
-							document.getElementById("rTitle").innerHTML = data[2];
-							document.getElementById("rURL").innerHTML = data[3];
-							document.getElementById("rImage").src = data[4];
-							document.getElementById("rAssociatedText").innerHTML = data[5];
-							
-							setElementVisibility("DownloadHandler", false);
-							setElementVisibility("RedirectHandler", true);
-							
-							// setElementVisibility("reader", false);
-							stopScanner();
-							
-							break;
-							
-						case "PDF":
-						
-							// File Download
-							document.getElementById("fItem").innerHTML = data[1];
-							document.getElementById("fTitle").innerHTML = data[2];
-							document.getElementById("fURL").innerHTML = data[3];
-							document.getElementById("fImage").src = data[4];
-							document.getElementById("fAssociatedText").innerHTML = data[5];
-							
-							setElementVisibility("RedirectHandler", false);
-							setElementVisibility("DownloadHandler", true);
-							
-							// setElementVisibility("reader", false);
-							stopScanner();
-							
-							break;
+						var cameraID = devices[0].id;
+						// .. use this to start scanning.
 						
 					}
 					
+				}).catch(err => {
+				
+					// handle err
+					
+				});
+				
+			}
+		
+			function processMessage(msg){
+			
+				msg = msg.replace("&#39;", "'");
+				data = msg.split(";");
+				
+				switch(data[FIELDS.TYPE_OF_CONTENT]){
+					
+					case "R":
+					
+						// Redirect
+						document.getElementById("rItem").innerHTML = data[1];
+						document.getElementById("rTitle").innerHTML = data[2];
+						document.getElementById("rURL").innerHTML = data[3];
+						document.getElementById("rImage").src = data[4];
+						document.getElementById("rAssociatedText").innerHTML = data[5];
+						
+						
+						setElementVisibility("DownloadHandler", false);
+						setElementVisibility("RedirectHandler", true);
+						
+						html5QrcodeScanner.clear();
+						
+						break;
+						
+					case "PDF":
+					
+						// File Download
+						document.getElementById("fItem").innerHTML = data[1];
+						document.getElementById("fTitle").innerHTML = data[2];
+						document.getElementById("fURL").onclick= "window.location = " + data[3];
+						document.getElementById("fImage").src = data[4];
+						document.getElementById("fAssociatedText").innerHTML = data[5];
+						
+						setElementVisibility("RedirectHandler", false);
+						setElementVisibility("DownloadHandler", true);
+						
+						html5QrcodeScanner.clear();
+						
+						break;
+						
+					default:
+						alert(data[FIELDS.TYPE_OF_CONTENT] + ": An unknown load type.");
+						break;
+					
 				}
 				
 			}
-			
 			
 			
 		</script>
@@ -125,9 +138,9 @@
 	</head>
 	
 	
-	<body style="margin : 0px; overflow: hidden;" onload="hideHandlers()">
+	<body style="margin : 0px; overflow: hidden; height: 100%; width: 100%; min-width: 100%; min-height: 100%;" onload="hideHandlers()">
 	
-		<div style="width: 500px" id="reader"></div>
+		<div style="width: 100vw" id="reader"></div>
 		
 		<div id="RedirectHandler">
 		
@@ -137,7 +150,7 @@
 			<p id="rItem"></p>
 			<p id="rAssociatedText"></p>
 			
-			<button onClick="CancelHeader()">Cancel</button>
+			<button onclick="cancelHeader()">Cancel</button>
 			<button id="rURL">Lets Go!</button>
 			
 			
@@ -151,7 +164,7 @@
 			<p id="fItem"></p>
 			<p id="fAssociatedText"></p>
 			
-			<button class="CancelHandler">Cancel</button>
+			<button onclick="cancelHeader()">Cancel</button>
 			<button id="fURL">Download</button>
 			
 		</div>
@@ -161,7 +174,10 @@
 	
 	<script>
 	
-		html5QrcodeScanner = new Html5QrcodeScanner("reader", { fps: 10, qrbox: 250 });
+		// CONSTRUCTION
+		loadScanner();
+		
+		
 		
 		function hideHandlers() {
 		
@@ -169,33 +185,30 @@
 			setElementVisibility("DownloadHandler", false);
 		}
 	
+		function hideScanner(){
+			document.getElementById("reader").visibility  = "hidden";
+		}
+		
+		function showScanner(){
+			document.getElementById("reader").visibility  = "visible";
+		}
+			
 		function cancelHeader(){
 			hideHandlers();
-			setElementVisibility("reader", true);
+			loadScanner();
 		}
-	
-		html5QrcodeScanner.render(onScanSuccess);
-
-		// This method will trigger user permissions
-		Html5Qrcode.getCameras().then(devices => {
 		
-		   /**
-		   * devices would be an array of objects of type:
-		   * { id: "id", label: "label" }
-		   */
-			if (devices && devices.length){
+		function setElementVisibility(el, show){
+		
+			var x = document.getElementById(el);
 			
-				var cameraID = devices[0].id;
-				// .. use this to start scanning.
-				
+			if (show) {
+				x.style.display = "block";
+			} else {
+				x.style.display = "none";
 			}
 			
-		}).catch(err => {
-		
-			// handle err
-			
-		});
-		
+		}
 		
 	</script>
 	
